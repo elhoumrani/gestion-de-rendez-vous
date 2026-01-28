@@ -1,0 +1,16 @@
+asgiref==3.11.0
+colorama==0.4.6
+Django==6.0
+djangorestframework==3.16.1
+djangorestframework_simplejwt==5.5.1
+iniconfig==2.3.0
+mysqlclient==2.2.7
+packaging==26.0
+pluggy==1.6.0
+Pygments==2.19.2
+PyJWT==2.10.1
+pytest==9.0.2
+pytest-django==4.11.1
+pytz==2025.2
+sqlparse==0.5.4
+tzdata==2025.2
