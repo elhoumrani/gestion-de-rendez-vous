@@ -1,6 +1,7 @@
 from urllib import request
 from django.shortcuts import render
 from django.db import transaction
+from FirstAppDrf.services.appointment_service import AppointmentService
 from FirstAppDrf.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -58,7 +59,7 @@ class ListUser(ModelViewSet):
         return CustomUser.objects.filter(id=user.id)
 
  
-# create TimeWorks
+# Creation et update de TimeWorks
 class TimeWorksView(ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = TimeWorksSerializer
@@ -76,6 +77,7 @@ class TimeWorksView(ModelViewSet):
     def get_queryset(self):
         return TimeWorks.objects.all()
 
+# Operation CRUD sur les blocks du calendrier
 class BlockCalendarView(ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = CalendarBlockSerializer
@@ -98,18 +100,7 @@ class BlockCalendarView(ModelViewSet):
             raise PermissionError("Vous n'êtes pas autorisé à supprimer des créneaux dans le calendrier.")
         instance.delete()
 
-#create appointment 
-class CreateAppointmentView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        serializer = AppointmentSerializer(data=request.data,
-                                           context={'request': request})
-        if serializer.is_valid():
-            serializer.save()
-        return Response({'message': 'Appointment created successfully',}, status=status.HTTP_201_CREATED)  
-
-# list and manage appointments
+# Operations CRUD sur les rendez-vous
 class AppointmentViewset(ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = AppointmentSerializer
@@ -119,9 +110,14 @@ class AppointmentViewset(ModelViewSet):
             return Appointment.objects.all()
         return Appointment.objects.filter(user_appointment=self.request.user) 
     
+    
     #perform_create est une méthode fournie par les ViewSets de Django REST Framework qui est appelée lors de la création d'une nouvelle instance d'un modèle.
     # son role est de modifier ou enrichier un objet avant qu'il soit sauvegardé dans la bd et apres la validation des donnes par le serializer
     def perform_create(self, serializer):
+        AppointmentService.validate_appointment(
+            self.request.user,
+            serializer.validated_data['appointment_date']
+        )
         serializer.save(user_appointment=self.request.user)
 
 
