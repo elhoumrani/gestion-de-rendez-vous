@@ -6,6 +6,13 @@ Elle offre un système complet de gestion des utilisateurs, des disponibilités,
 
 Le projet est développé avec Django REST Framework et suit une architecture claire et évolutive.
 
+## Technologies
+- Python 3.12
+- Django & Django REST Framework
+- MySQL comme SGBD
+- Postman pour tests API
+
+
 # Fonctionnalités principales 
 
 **Gestion des utilisateurs**
