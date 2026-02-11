@@ -8,7 +8,7 @@ Le projet est développé avec Django REST Framework et suit une architecture cl
 
 # Fonctionnalités principales 
 
-*Gestion des utilisateurs 
+**Gestion des utilisateurs**
     Inscription des utilisateurs
 
     Authentification via JWT
@@ -19,7 +19,7 @@ Le projet est développé avec Django REST Framework et suit une architecture cl
 
     Suppression des utilisateurs (réservée aux administrateurs)
 
-*Gestion des rendez-vous
+**Gestion des rendez-vous**
     Création de rendez-vous par les utilisateurs
 
     Limitation à un seul rendez-vous en attente par utilisateur
@@ -28,7 +28,7 @@ Le projet est développé avec Django REST Framework et suit une architecture cl
 
     Validation ou refus par les gestionnaires / administrateurs
 
-*Horaires de travail (TimeWorks)
+**Horaires de travail (TimeWorks)**
 
     Définition des horaires de travail par un gestionnaire
 
@@ -36,15 +36,31 @@ Le projet est développé avec Django REST Framework et suit une architecture cl
 
     Possibilité de mettre à jour les horaires existants
 
-*Indisponibilités (CalendarBlock)
+## Règles métier
+- Un utilisateur ne peut avoir qu’un seul rendez-vous en attente.
+- Deux rendez-vous ne peuvent pas être pris sur le même créneau.
+- Un rendez-vous ne peut pas être pris si la date est bloquée par la direction.
+- Un rendez-vous accepté ne peut plus être modifié.
+- Seuls les managers ou superusers peuvent modifier le statut d’un rendez-vous.
 
-    Blocage de créneaux horaires par un gestionnaire ou superUser
+## Permissions
+    **User simple** : créer et consulter ses propres rendez-vous.
+    **Manager / Admin** : modifier le statut, commenter les décisions, notifications automatiques.
 
-    Empêche la prise de rendez-vous sur une période indisponible
+## Endpoints principaux
+- `POST api/appointments/` : créer un rendez-vous
+- `PATCH api/appointments/<id>/changer-status/` : modifier le statut d’un rendez-vous
+- `GET api/appointments/` : lister ses rendez-vous (admin peut voir tous)
 
-Notifications
+## Historique et notifications
+- Toute modification de statut est enregistrée dans `AppointmentDecision`.
+- Chaque changement inclut le **responsable, le statut précédent, le nouveau statut et un commentaire facultatif**.
+- Les notifications sont envoyées automatiquement aux utilisateurs concernés.
 
-    Notification automatique lors de certaines actions (ex : modification d’un rendez-vous)
-
-
+## Tests
+- Tests unitaires pour le service métier et les serializers.
+- Tests end-to-end pour les permissions et l’API.
+- Pour lancer les tests :  
+```bash
+python manage.py test
 
