@@ -5,6 +5,7 @@ class IsAdminUser(BasePermission):
         return bool(request.user and request.user.is_authenticated and request.user.is_superuser )
     
 
-class IsManagerUser(BasePermission):
+class IsManagerOrAdmin(BasePermission):
     def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and request.user.user_role == 'manager' )
+        return bool(request.user and request.user.is_authenticated
+                     and (request.user.user_role == 'manager' or request.user.is_superuser) )

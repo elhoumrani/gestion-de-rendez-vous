@@ -4,7 +4,7 @@ from rest_framework import serializers
 from datetime import time
 from zoneinfo import ZoneInfo
 from django.utils.timezone import localtime
-from .models import Appointment, CalendarBlock, Notification, Feedback, CustomUser, TimeWorks
+from .models import Appointment, AppointmentDesicion, AppointmentStatus, CalendarBlock, Notification, Feedback, CustomUser, TimeWorks
 from django.contrib.auth.password_validation import validate_password
 
 
@@ -40,7 +40,7 @@ class UserSerializer(ModelSerializer):
         password = validated_data.pop('password')
 
         user = CustomUser(**validated_data)
-        user.set_password(password)  # 🔐 HASH ICI
+        user.set_password(password)  
         user.save()
         return user
         
@@ -83,7 +83,7 @@ class TimeWorksSerializer(serializers.ModelSerializer):
         return instance
     
 
-class CalendarBlockSerializer(ModelSerializer):
+class CalendarBlockSerializer(ModelSerializer): 
     class Meta:
         model = CalendarBlock
         fields = ['start_date', 'end_date', 'reason']
@@ -112,41 +112,35 @@ def cheick_time_work(value, serializer):
         except Exception:
             raise serializer.context['warning'] == "Erreur lors de la vérification des horaires de travail."
 
+class AppointmentDecisionSerializer(ModelSerializer):
+    decided_by = serializers.StringRelatedField()
+    class Meta:
+        model = AppointmentDesicion
+        fields = ['id', 'decided_by', 'previous_status','new_status', 'comment']
+
 #Serializer pour la gestion des rendez-vous
 class AppointmentSerializer(ModelSerializer):
+
+    decisions = AppointmentDecisionSerializer(many=True, read_only=True)
+
     class Meta:
         model = Appointment
-        fields = ['appointment_date', 'appointment_type', 'description', 'status',]
+        fields = ['appointment_date', 'appointment_type', 'description', 'status', 'decisions']
 
+    def validate(self, attrs):
+        user = self.context['request'].user
+        # Bloquer un user simple qui tente de modifier le status
+        if 'status' in attrs:
+            if user.user_role != "manager" and not user.is_superuser:
+                raise serializers.ValidationError(
+                    "Vous n'êtes pas autorisé à modifier le statut."
+                )
 
-
-    def validate_appointment_date(self, value):
-        
-        #Vérifier indisponibilités
-        blocked = CalendarBlock.objects.filter(
-            start_date__lte=value,
-            end_date__gte=value
-        ).exists()
-
-        if blocked:
-            raise serializers.ValidationError(
-                "Cette date est indisponible."
-            )
-        
-        cheick_time_work(value, self)
-
-        return value
+        return attrs
 
 
     def create(self, validated_data):
-        user = self.context['request'].user
-        appointment = Appointment.objects.filter(
-            user_appointment=user,
-            status__in=['en_attente']
-        ).exists()
-        if appointment:
-            raise serializers.ValidationError("Vous avez déjà un rendez-vous en attente.")
-        
+
         appointment = Appointment.objects.create(
          
             **validated_data
@@ -154,32 +148,17 @@ class AppointmentSerializer(ModelSerializer):
         return appointment
     
     def update(self, instance, validated_data):
-        request = self.context['request']
-
-        user = request.user
-
-        if (user.user_role == 'user'):
-            if 'status' in validated_data:
-                validated_data.pop('status')
-                raise serializers.ValidationError("Vous n'êtes pas autorisé à modifier le statut de ce rendez-vous.")
-        
-        old_status = instance.status
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
-        instance.save()
-
-        if old_status == 'accept' and user.user_role == 'manager' or user.is_superuser:
-            Notification.objects.create(
-                message = f"Votre rendez-vous du {instance.appointment_date} a été modifié. Nouveau statut: {instance.get_status_display()} par un gestionnaire.",
-                appointment = instance)
-        if old_status != 'accept' and user.user_role == 'manager' or user.is_superuser:
-            Notification.objects.create(
-                message = f"Votre rendez-vous du {instance.appointment_date} a été modifié. Nouveau statut: {instance.get_status_display()} par un gestionnaire.",
-                appointment = instance)
-                
+        instance.save()             
         return instance  
-    
+
+
+class AppointmentStatusSerializer(serializers.Serializer):
+    status = serializers.ChoiceField(choices=AppointmentStatus.choices)
+    comment = serializers.CharField(required=False, allow_blank=True)
+
 
 # serializer pour la gestion des feedbacks
 class FeedbackSerializer(ModelSerializer):

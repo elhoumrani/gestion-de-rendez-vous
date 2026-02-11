@@ -63,7 +63,22 @@ class Appointment(models.Model):
     def __str__(self):
         return f"{self.appointment_date} - {self.user_appointment} - {self.get_status_display()}"
 
+class AppointmentDesicion(models.Model):
+    appointment = models.ForeignKey(
+        Appointment, on_delete=models.CASCADE,
+        related_name = 'decisions'
+    )
+    decided_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True
+    )
+    previous_status = models.CharField(max_length=20)
+    new_status = models.CharField(max_length=20)
+    decided_at = models.DateTimeField(auto_now_add=True)
+    comment = models.TextField()
 
+   
 class Notification(models.Model):
     message = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -72,7 +87,6 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"Notification: {self.message} - Read: {self.is_read}"
-
 
 
 class Feedback(models.Model):

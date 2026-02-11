@@ -1,9 +1,11 @@
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
-from FirstAppDrf.models import Appointment, CalendarBlock
-class AppointmentService():
+from FirstAppDrf.models import Appointment, CalendarBlock, AppointmentDesicion
 
+
+
+class AppointmentService():
     
     @staticmethod
     def validate_appointment(user, appointment_date):
@@ -37,4 +39,22 @@ class AppointmentService():
         ).count()
         if count_appointments >= limit:
             raise ValidationError("Le nombre maximum de rendez-vous pour cette date a été atteint.")
+
+    # creer un historique de modification de status et envoye une notif
+    @staticmethod
+    def change_status(appointment, user, new_status, comment=""):
+
+        if appointment.status == new_status : 
+            return appointment
         
+        AppointmentDesicion.objects.create(
+            appointment = appointment,
+            decided_by = user,
+            previous_status = appointment.status, 
+            new_status = new_status,
+            comment = comment
+        )
+        appointment.status = new_status
+        appointment.save(update_fields=['status'])
+        return appointment
+    

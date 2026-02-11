@@ -1,6 +1,6 @@
 from django.urls import include, path
 
-from .views import  AppointmentViewset, BlockCalendarView, FeedbackViewset, ListUser, RegisterView, TimeWorksView, UpdateUserView
+from .views import  AppointmentDecisionView, AppointmentViewset, BlockCalendarView, FeedbackViewset, ListUser, RegisterView, TimeWorksView, UpdateUserView
 from rest_framework import routers
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
@@ -20,6 +20,9 @@ routerBlockCalendar.register(r'calendar-blocks',  BlockCalendarView, basename='c
 routerTimeWorks = routers.DefaultRouter()
 routerTimeWorks.register(r'time-works',  TimeWorksView, basename='time-works') 
 
+routerAppointmentDecision = routers.DefaultRouter()
+routerAppointmentDecision.register(r'appointment-decision', AppointmentDecisionView, basename='appointment-decision')
+
 
 
 urlpatterns = [
@@ -32,6 +35,8 @@ urlpatterns = [
     path('api/', include(routerListUser.urls)),
      # url for appointment CRUD operations
     path('api/', include(routerAppointment.urls)),
+     # url for appointment Decision
+    path('api/', include(routerAppointmentDecision.urls)),
      # url for feedback CRUD operations
     path('api/', include(routerFeedback.urls)),
         # url for calendar block CRUD operations
